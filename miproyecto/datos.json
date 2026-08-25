@@ -9,5 +9,14 @@
         "formalidad_prenda": 2,
         "formalidad_ocasion": 2,
         "resultado": "Aceptado"
+    },
+    {
+        "nombre": "Polerón",
+        "color": "negro",
+        "estado_limpieza": "limpio",
+        "formalidad_prenda": 5,
+        "formalidad_ocasion": 10,
+        "resultado": "Rechazo 2: Diferencia de formalidad mayor a 2 puntos",
+        "id": "bfd2f00e-04e5-4764-8fd5-0f5837480ebe"
     }
 ]
