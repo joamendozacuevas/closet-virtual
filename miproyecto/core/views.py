@@ -4,47 +4,19 @@ import uuid
 
 from django.http import Http404
 from django.shortcuts import redirect, render
+from solucion import evaluar_prenda
 
 
 def _leer_datos():
 	if os.path.exists('datos.json'):
 		with open('datos.json', 'r', encoding='utf-8') as archivo:
-			registros = json.load(archivo)
-		datos_actualizados = False
-		for registro in registros:
-			if 'id' not in registro:
-				registro['id'] = str(uuid.uuid4())
-				registro['color'] = registro.get('color', 'Sin especificar')
-				registro['estado_limpieza'] = 'limpio'
-				registro['formalidad_prenda'] = registro.get('formalidad', 0)
-				registro['formalidad_ocasion'] = registro.get('formalidad', 0)
-				registro['resultado'] = registro.get('estado', 'Dato Inválido')
-				datos_actualizados = True
-		if datos_actualizados:
-			_guardar_datos(registros)
-		return registros
+			return json.load(archivo)
 	return []
 
 
 def _guardar_datos(registros):
 	with open('datos.json', 'w', encoding='utf-8') as archivo:
 		json.dump(registros, archivo, ensure_ascii=False, indent=4)
-
-
-def _calcular_resultado(estado_limpieza, formalidad_prenda, formalidad_ocasion):
-	if (
-		formalidad_prenda < 1
-		or formalidad_prenda > 10
-		or formalidad_ocasion < 1
-		or formalidad_ocasion > 10
-	):
-		return 'Dato Inválido'
-	elif estado_limpieza.lower() == 'sucio':
-		return 'Rechazo 1'
-	elif abs(formalidad_prenda - formalidad_ocasion) > 2:
-		return 'Rechazo 2'
-	else:
-		return 'Aceptado'
 
 
 def _datos_del_formulario(request):
@@ -64,7 +36,7 @@ def _datos_del_formulario(request):
 		'estado_limpieza': estado_limpieza,
 		'formalidad_prenda': formalidad_prenda,
 		'formalidad_ocasion': formalidad_ocasion,
-		'resultado': _calcular_resultado(
+		'resultado': evaluar_prenda(
 			estado_limpieza, formalidad_prenda, formalidad_ocasion
 		),
 	}
