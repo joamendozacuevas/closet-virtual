@@ -8,8 +8,8 @@ import django
 
 django.setup()
 
-from core.models import Registro
-from core.views import decidir
+from core.models import Prenda
+from solucion import evaluar_prenda
 
 
 def main():
@@ -18,17 +18,24 @@ def main():
         datos = json.load(archivo)
     creados = 0
     for dato in datos:
-        cantidad = dato.get('cantidad', dato.get('formalidad_prenda'))
-        estado = dato.get('estado')
-        if estado not in Registro.Estado.values:
-            estado = 'al dia' if dato.get('estado_limpieza') == 'limpio' else 'moroso'
+        formalidad = dato.get('formalidad', dato.get('formalidad_prenda'))
+        estado = dato.get('estado_limpieza', dato.get('estado', '')).lower()
+        if estado not in Prenda.Estado.values:
+            estado = 'limpio'
         try:
-            cantidad = int(cantidad)
+            formalidad = int(formalidad)
+            formalidad_ocasion = int(dato.get('formalidad_ocasion', formalidad))
         except (TypeError, ValueError):
             continue
-        Registro.objects.create(
-            nombre=dato.get('nombre', 'Sin nombre'), cantidad=cantidad,
-            estado=estado, resultado=decidir(cantidad, estado),
+        if not 1 <= formalidad <= 10 or not 1 <= formalidad_ocasion <= 10:
+            continue
+        Prenda.objects.create(
+            nombre=dato.get('nombre', 'Sin nombre'),
+            color=dato.get('color', 'Sin especificar'),
+            tipo='otro',
+            estado=estado,
+            formalidad=formalidad,
+            resultado_decision=evaluar_prenda(estado, formalidad, formalidad_ocasion),
         )
         creados += 1
     print(f'{creados} registros importados.')

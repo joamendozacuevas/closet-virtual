@@ -2,14 +2,14 @@
 
 ## Alcance
 
-La aplicación evoluciona desde ES1 a una aplicación Django persistente. Los registros se almacenan en SQLite mediante el modelo `Registro`; ya no se escriben desde las vistas en `datos.json`. El sistema implementa crear, listar, editar y eliminar con borrado lógico, por lo que los registros eliminados conservan trazabilidad y no aparecen en el listado activo. Incluye panel de administración, inicio y cierre de sesión, y roles `admin`, `normal` y `viewer` protegidos del lado del servidor.
+La aplicación evoluciona desde ES1 a un inventario digital de prendas en Django. Las prendas se almacenan en SQLite mediante el modelo `Prenda`; `datos.json` deja de ser usado por las vistas. El sistema implementa crear, listar, editar y eliminar con borrado lógico, por lo que las prendas eliminadas conservan trazabilidad y no aparecen en el inventario activo. Incluye panel de administración, inicio y cierre de sesión, y roles `admin`, `normal` y `viewer` protegidos del lado del servidor. El despliegue futuro está proyectado en Render, usando variables de entorno para la configuración.
 
 ## Priorización MoSCoW
 
 ### Must
 
-- Persistencia SQLite y migraciones Django para `Registro`.
-- CRUD web con validación de enteros y cálculo de resultado mediante la función de decisión existente.
+- Persistencia SQLite y migraciones Django para `Prenda`.
+- CRUD web con validación de datos y cálculo de resultado mediante la función de decisión existente.
 - Borrado lógico y fecha de eliminación.
 - Panel de administración Django.
 - Login, logout y autorización por roles: `admin` administra; `normal` crea; `viewer` solo consulta.

@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>{{ titulo }} | Registros</title>
+    <title>{{ titulo }} | Clóset Virtual</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
 </head>
 <body class="bg-light">
@@ -12,10 +12,13 @@
     {% if messages %}{% for message in messages %}<div class="alert alert-danger">{{ message }}</div>{% endfor %}{% endif %}
     <form method="post" class="row g-3">
         {% csrf_token %}
-        <div class="col-12"><label for="nombre" class="form-label">Nombre</label><input id="nombre" name="nombre" value="{{ registro.nombre|default:'' }}" class="form-control" required></div>
-        <div class="col-md-6"><label for="cantidad" class="form-label">Cantidad</label><input id="cantidad" name="cantidad" type="number" step="1" value="{{ registro.cantidad|default:'' }}" class="form-control" required></div>
-        <div class="col-md-6"><label for="estado" class="form-label">Estado</label><select id="estado" name="estado" class="form-select" required><option value="al dia" {% if registro.estado == 'al dia' %}selected{% endif %}>Al día</option><option value="moroso" {% if registro.estado == 'moroso' %}selected{% endif %}>Moroso</option></select></div>
-        <div class="col-12"><button class="btn btn-primary" type="submit">Guardar</button> <a class="btn btn-secondary" href="{% url 'lista' %}">Cancelar</a></div>
+        <div class="col-md-6"><label for="nombre" class="form-label">Nombre</label><input id="nombre" name="nombre" value="{{ prenda.nombre|default:'' }}" class="form-control" required></div>
+        <div class="col-md-6"><label for="color" class="form-label">Color</label><input id="color" name="color" value="{{ prenda.color|default:'' }}" class="form-control" required></div>
+        <div class="col-md-4"><label for="tipo" class="form-label">Tipo</label><select id="tipo" name="tipo" class="form-select" required><option value="camisa" {% if prenda.tipo == 'camisa' %}selected{% endif %}>Camisa</option><option value="pantalon" {% if prenda.tipo == 'pantalon' %}selected{% endif %}>Pantalón</option><option value="zapatos" {% if prenda.tipo == 'zapatos' %}selected{% endif %}>Zapatos</option><option value="polera" {% if prenda.tipo == 'polera' %}selected{% endif %}>Polera</option><option value="chaqueta" {% if prenda.tipo == 'chaqueta' %}selected{% endif %}>Chaqueta</option><option value="otro" {% if prenda.tipo == 'otro' %}selected{% endif %}>Otro</option></select></div>
+        <div class="col-md-4"><label for="estado" class="form-label">Estado</label><select id="estado" name="estado" class="form-select" required><option value="limpio" {% if prenda.estado == 'limpio' %}selected{% endif %}>Limpio</option><option value="sucio" {% if prenda.estado == 'sucio' %}selected{% endif %}>Sucio</option><option value="planchado" {% if prenda.estado == 'planchado' %}selected{% endif %}>Planchado</option></select></div>
+        <div class="col-md-2"><label for="formalidad" class="form-label">Formalidad</label><input id="formalidad" name="formalidad" type="number" min="1" max="10" value="{{ prenda.formalidad|default:'' }}" class="form-control" required></div>
+        <div class="col-md-2"><label for="formalidad_ocasion" class="form-label">Ocasión</label><input id="formalidad_ocasion" name="formalidad_ocasion" type="number" min="1" max="10" value="{{ prenda.formalidad|default:'' }}" class="form-control" required></div>
+        <div class="col-12"><button class="btn btn-primary" type="submit">Guardar</button> <a class="btn btn-secondary" href="{% url 'lista_prendas' %}">Cancelar</a></div>
     </form>
 </div></section></main>
 </body>

@@ -1,6 +1,6 @@
 # Documentación de uso de IA (EVA2)
 
 - **Herramienta utilizada:** Codex de OpenAI.
-- **Pregunta textual:** “¿Cómo creo en Django un modelo `Registro` con SQLite, migraciones, borrado lógico, CRUD protegido por grupos `admin`, `normal` y `viewer`, sin reescribir la función `decidir()` de `solucion.py`?”
-- **Aplicación de la respuesta:** Se usó como guía para el modelo, el registro de administración, las migraciones, vistas con `login_required` y decoradores de roles, y scripts de carga y usuarios.
-- **Correcciones realizadas:** El repositorio ES1 no tenía la función `decidir(cantidad, estado)` indicada: contiene `evaluar_prenda(estado, formalidad_prenda, formalidad_ocasion)`. No se modificó esa función; se añadió una capa de compatibilidad temporal en las vistas para importarla y reutilizarla. Además, el proyecto llama `core` a la app, por lo que el modelo se creó en `core/models.py` y no en una carpeta inexistente llamada `app`.
+- **Pregunta textual:** “¿Cómo creo en Django un modelo `Prenda` para un clóset virtual con SQLite, migraciones, borrado lógico y CRUD protegido por los grupos existentes `admin`, `normal` y `viewer`, sin reescribir el motor de decisión de `solucion.py`?”
+- **Aplicación de la respuesta:** Se usó como guía para el modelo, el registro de administración, las migraciones, vistas con `login_required`, decoradores de roles y la importación de datos históricos.
+- **Correcciones realizadas:** El repositorio ES1 no contiene una función llamada `decidir`; contiene `evaluar_prenda(estado, formalidad_prenda, formalidad_ocasion)`. No se modificó ni copió esa función: las vistas la importan y la llaman directamente. También se conservó la estructura de usuarios y grupos ya existente, por lo que se eliminó el script que intentaba crear usuarios.
