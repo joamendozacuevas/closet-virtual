@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="es">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Registros</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body class="bg-light">
+<main class="container py-4">
+    <header class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="h3 mb-0">Registros activos</h1>
+        <form method="post" action="{% url 'logout' %}">{% csrf_token %}<button class="btn btn-outline-secondary btn-sm">Cerrar sesión</button></form>
+    </header>
+    {% if messages %}{% for message in messages %}<div class="alert alert-success">{{ message }}</div>{% endfor %}{% endif %}
+    {% if puede_crear %}<a class="btn btn-primary mb-3" href="{% url 'crear' %}">Crear registro</a>{% endif %}
+    <section class="card shadow-sm"><div class="card-body table-responsive">
+        <table class="table align-middle mb-0"><thead><tr><th>Nombre</th><th>Cantidad</th><th>Estado</th><th>Resultado</th><th>Fecha</th><th>Acciones</th></tr></thead>
+        <tbody>{% for registro in registros %}<tr>
+            <td>{{ registro.nombre }}</td><td>{{ registro.cantidad }}</td><td>{{ registro.get_estado_display }}</td><td>{{ registro.resultado }}</td><td>{{ registro.fecha|date:"d-m-Y H:i" }}</td>
+            <td>{% if puede_administrar %}<a class="btn btn-warning btn-sm" href="{% url 'editar' registro.pk %}">Editar</a><form class="d-inline" method="post" action="{% url 'eliminar' registro.pk %}">{% csrf_token %}<button class="btn btn-danger btn-sm">Eliminar</button></form>{% endif %}</td>
+        </tr>{% empty %}<tr><td colspan="6" class="text-center">No hay registros activos.</td></tr>{% endfor %}</tbody></table>
+    </section></div>
+</main>
+</body>
+</html>

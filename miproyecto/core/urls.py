@@ -1,10 +1,12 @@
 from django.urls import path
 
-from .views import agregar, editar, eliminar, resumen
+from . import views
 
 urlpatterns = [
-    path('', resumen, name='resumen'),
-    path('agregar', agregar, name='agregar'),
-    path('eliminar/<str:id>', eliminar, name='eliminar'),
-    path('editar/<str:id>', editar, name='editar'),
+    path('', views.lista, name='lista'),
+    path('crear/', views.crear, name='crear'),
+    path('editar/<int:registro_id>/', views.editar, name='editar'),
+    path('eliminar/<int:registro_id>/', views.eliminar, name='eliminar'),
+    path('login/', views.vista_login, name='login'),
+    path('logout/', views.vista_logout, name='logout'),
 ]

@@ -1,6 +1,6 @@
-# Documentación de uso de IA (Criterio 1.1.4)
+# Documentación de uso de IA (EVA2)
 
-1. **Herramienta utilizada:** Codex / GitHub Copilot (integrado en VS Code) y Gemini.
-2. **Para qué la consulté:** Para estructurar la lógica de decisión en Python cumpliendo con la regla de los 4 resultados, y para integrar la lectura del archivo JSON dentro de la vista de Django sin usar bases de datos.
-3. **Consulta concreta:** "Genera la estructura if/elif para evaluar 5 variables (nombre, color, estado, formalidad prenda, formalidad ocasión) que retorne 4 casos exactos: dato inválido, rechazado por suciedad, rechazado por nivel de formalidad y aceptado."
-4. **Correcciones manuales:** La IA inicialmente intentó crear un archivo `models.py` para guardar el "objeto" prenda. Tuve que corregir esto manualmente e indicarle por prompt que construyera un diccionario de Python y lo inyectara directamente en `datos.json` mediante la librería `json`, respetando la restricción de no usar bases de datos de la Fase 0.
+- **Herramienta utilizada:** Codex de OpenAI.
+- **Pregunta textual:** “¿Cómo creo en Django un modelo `Registro` con SQLite, migraciones, borrado lógico, CRUD protegido por grupos `admin`, `normal` y `viewer`, sin reescribir la función `decidir()` de `solucion.py`?”
+- **Aplicación de la respuesta:** Se usó como guía para el modelo, el registro de administración, las migraciones, vistas con `login_required` y decoradores de roles, y scripts de carga y usuarios.
+- **Correcciones realizadas:** El repositorio ES1 no tenía la función `decidir(cantidad, estado)` indicada: contiene `evaluar_prenda(estado, formalidad_prenda, formalidad_ocasion)`. No se modificó esa función; se añadió una capa de compatibilidad temporal en las vistas para importarla y reutilizarla. Además, el proyecto llama `core` a la app, por lo que el modelo se creó en `core/models.py` y no en una carpeta inexistente llamada `app`.

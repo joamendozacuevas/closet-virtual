@@ -1,116 +1,33 @@
-# Clóset Virtual - Validador de Prendas
+# Clóset Virtual — EVA2
 
-Prueba de Concepto (POC) desarrollada para la evaluación ES1 de Programación Back End en Inacap. El sistema evalúa si una prenda es apta para una ocasión determinada, comparando el nivel de formalidad de la prenda con el nivel requerido para la ocasión.
+Aplicación Django con registros persistidos en SQLite. Incluye CRUD, borrado lógico, administración Django y control de acceso mediante los grupos `admin`, `normal` y `viewer`.
 
-## Características
-
-- Validación por consola mediante `solucion.py`.
-- Registro de nombre, color, estado de limpieza y niveles de formalidad.
-- Clasificación en cuatro resultados: `Aceptado`, `Rechazo 1`, `Rechazo 2` y `Dato Inválido`.
-- Persistencia local en el archivo `datos.json`.
-- Interfaz web desarrollada con Django y Bootstrap 5.
-- Lectura y CRUD de prendas mediante las vistas de `core/views.py`.
-- No utiliza bases de datos, SQLite ni migraciones.
-
-## Stack Tecnológico
-
-- Python 3
-- Django
-- Bootstrap 5
-- JSON
-- python-decouple
-- tabulate
-
-## Requisitos Previos
-
-- Python 3 instalado.
-- Git instalado.
-- Acceso a una terminal.
-- Visual Studio Code u otro editor de código (opcional).
-
-## Instalación y Configuración
-
-1. Clona el repositorio:
-
-   ```bash
-   git clone https://github.com/joamendozacuevas/closet-virtual.git
-   cd closet-virtual
-   ```
-
-2. Crea el entorno virtual:
-
-   ```bash
-   python3 -m venv entorno
-   ```
-
-3. Activa el entorno virtual:
-
-   En macOS o Linux:
-
-   ```bash
-   source entorno/bin/activate
-   ```
-
-   En Windows PowerShell:
-
-   ```powershell
-   .\entorno\Scripts\Activate.ps1
-   ```
-
-4. Instala las dependencias:
-
-   ```bash
-   pip install -r requirements.txt
-   ```
-
-5. Entra a la carpeta del proyecto Django:
-
-   ```bash
-   cd miproyecto
-   ```
-
-6. Crea el archivo local `.env` a partir de la plantilla pública:
-
-   En macOS o Linux:
-
-   ```bash
-   cp .env.example .env
-   ```
-
-   En Windows PowerShell:
-
-   ```powershell
-   Copy-Item .env.example .env
-   ```
-
-7. Reemplaza `SECRET_KEY=tu-clave-aqui` en `.env` por una clave local propia. Mantén `.env` fuera del repositorio; el archivo está protegido por `.gitignore`.
-
-## Cómo Ejecutarlo
-
-### Versión de consola
-
-Desde `closet-virtual/miproyecto`, con el entorno virtual activo:
+## Puesta en marcha
 
 ```bash
-python3 solucion.py
+python3 -m venv venv
+source venv/bin/activate
+pip install -r requirements.txt
+cd miproyecto
+python manage.py migrate
+python manage.py runserver
 ```
 
-El programa solicitará los datos de la prenda, mostrará la decisión y guardará el registro en `datos.json`.
+Copie `.env.example` como `miproyecto/.env` y asigne valores locales a `SECRET_KEY` y `DEBUG`. El archivo de ejemplo solo enumera variables y no contiene secretos.
 
-### Servidor Django
+## Datos y usuarios
 
-Desde `closet-virtual/miproyecto`, con el entorno virtual activo:
+Desde `miproyecto/`:
 
 ```bash
-python3 manage.py runserver
+python cargar_datos.py
+ADMIN_PASSWORD='una-clave-segura' NORMAL_PASSWORD='otra-clave' VIEWER_PASSWORD='otra-clave' python crear_usuarios.py
 ```
 
-Luego abre [http://127.0.0.1:8000/](http://127.0.0.1:8000/) en el navegador.
+El segundo comando crea los grupos y usuarios `admin`, `normal` y `viewer`; `admin` es superusuario y puede ingresar a `/admin/`. Las contraseñas solo se leen desde variables de entorno. Los datos históricos de `datos.json` se importan a SQLite una vez mediante el primer comando; las vistas web ya no lo modifican.
 
-La interfaz permite agregar, consultar, editar y eliminar prendas almacenadas en `datos.json`.
+## Roles
 
-## Seguridad
-
-- No subir `.env` a GitHub.
-- Usar `.env.example` como plantilla sin credenciales reales.
-- No se almacenan datos en una base de datos; toda la persistencia se realiza en `datos.json`.
+- `admin`: lista, crea, edita y realiza borrado lógico.
+- `normal`: lista y crea.
+- `viewer`: solo lista.
