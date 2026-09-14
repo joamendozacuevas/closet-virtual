@@ -1,79 +1,139 @@
-import json
-import os
-import uuid
+from functools import wraps
 
-from django.http import Http404
-from django.shortcuts import redirect, render
+from django.contrib import messages
+from django.contrib.auth import authenticate, login, logout
+from django.contrib.auth.decorators import login_required
+from django.http import HttpResponseForbidden
+from django.shortcuts import get_object_or_404, redirect, render
+from django.views.decorators.http import require_POST
+
 from solucion import evaluar_prenda
 
-
-def _leer_datos():
-	if os.path.exists('datos.json'):
-		with open('datos.json', 'r', encoding='utf-8') as archivo:
-			return json.load(archivo)
-	return []
+from .models import Prenda
 
 
-def _guardar_datos(registros):
-	with open('datos.json', 'w', encoding='utf-8') as archivo:
-		json.dump(registros, archivo, ensure_ascii=False, indent=4)
+def tiene_rol(usuario, roles):
+    """Indica si un usuario pertenece a alguno de los grupos permitidos."""
+    return usuario.is_authenticated and (
+        usuario.is_superuser or usuario.groups.filter(name__in=roles).exists()
+    )
 
 
-def _datos_del_formulario(request):
-	try:
-		formalidad_prenda = int(request.POST.get('formalidad_prenda', 0))
-	except ValueError:
-		formalidad_prenda = 0
-	try:
-		formalidad_ocasion = int(request.POST.get('formalidad_ocasion', 0))
-	except ValueError:
-		formalidad_ocasion = 0
-
-	estado_limpieza = request.POST.get('estado_limpieza', '').strip()
-	return {
-		'nombre': request.POST.get('nombre', '').strip(),
-		'color': request.POST.get('color', '').strip(),
-		'estado_limpieza': estado_limpieza,
-		'formalidad_prenda': formalidad_prenda,
-		'formalidad_ocasion': formalidad_ocasion,
-		'resultado': evaluar_prenda(
-			estado_limpieza, formalidad_prenda, formalidad_ocasion
-		),
-	}
+def requiere_rol(*roles):
+    """Protege una vista en el servidor según grupos de Django."""
+    def decorador(vista):
+        @wraps(vista)
+        def envoltura(request, *args, **kwargs):
+            if not request.user.is_authenticated:
+                return redirect('login')
+            if not tiene_rol(request.user, roles):
+                return HttpResponseForbidden('No tienes permisos para esta acción.')
+            return vista(request, *args, **kwargs)
+        return envoltura
+    return decorador
 
 
-def resumen(request):
-	return render(request, 'resumen.html', {'registros': _leer_datos()})
+def _datos_validos(request):
+    nombre = request.POST.get('nombre', '').strip()
+    color = request.POST.get('color', '').strip()
+    tipo = request.POST.get('tipo', '').strip()
+    estado = request.POST.get('estado', '').strip()
+    try:
+        formalidad = int(request.POST.get('formalidad', ''))
+        formalidad_ocasion = int(request.POST.get('formalidad_ocasion', ''))
+    except (TypeError, ValueError):
+        return None
+    if (
+        not nombre
+        or not color
+        or tipo not in Prenda.Tipo.values
+        or estado not in Prenda.Estado.values
+        or not 1 <= formalidad <= 10
+        or not 1 <= formalidad_ocasion <= 10
+    ):
+        return None
+    return nombre, color, tipo, estado, formalidad, formalidad_ocasion
 
 
-def agregar(request):
-	if request.method == 'POST':
-		prenda = _datos_del_formulario(request)
-		prenda['id'] = str(uuid.uuid4())
-		registros = _leer_datos()
-		registros.append(prenda)
-		_guardar_datos(registros)
-	return redirect('resumen')
+def vista_login(request):
+    if request.user.is_authenticated:
+        return redirect('lista_prendas')
+    if request.method == 'POST':
+        usuario = authenticate(
+            request,
+            username=request.POST.get('username', ''),
+            password=request.POST.get('password', ''),
+        )
+        if usuario is not None:
+            login(request, usuario)
+            return redirect(request.POST.get('next') or 'lista_prendas')
+        messages.error(request, 'Usuario o contraseña incorrectos.')
+    return render(request, 'login.html')
 
 
-def eliminar(request, id):
-	registros = _leer_datos()
-	registros = [registro for registro in registros if registro.get('id') != id]
-	_guardar_datos(registros)
-	return redirect('resumen')
+@require_POST
+def vista_logout(request):
+    logout(request)
+    return redirect('login')
 
 
-def editar(request, id):
-	registros = _leer_datos()
-	prenda = next(
-		(registro for registro in registros if registro.get('id') == id), None
-	)
-	if prenda is None:
-		raise Http404('La prenda no existe')
+@login_required
+def lista_prendas(request):
+    return render(request, 'lista.html', {
+        'prendas': Prenda.objects.filter(eliminado=False),
+        'puede_crear': tiene_rol(request.user, ('admin', 'normal')),
+        'puede_administrar': tiene_rol(request.user, ('admin',)),
+    })
 
-	if request.method == 'POST':
-		prenda.update(_datos_del_formulario(request))
-		_guardar_datos(registros)
-		return redirect('resumen')
 
-	return render(request, 'editar.html', {'prenda': prenda})
+@requiere_rol('admin', 'normal')
+def agregar_prenda(request):
+    if request.method == 'POST':
+        datos = _datos_validos(request)
+        if datos is None:
+            messages.error(request, 'Completa todos los campos y usa formalidades entre 1 y 10.')
+        else:
+            nombre, color, tipo, estado, formalidad, formalidad_ocasion = datos
+            Prenda.objects.create(
+                nombre=nombre,
+                color=color,
+                tipo=tipo,
+                estado=estado,
+                formalidad=formalidad,
+                resultado_decision=evaluar_prenda(estado, formalidad, formalidad_ocasion),
+            )
+            messages.success(request, 'Prenda agregada correctamente.')
+            return redirect('lista_prendas')
+    return render(request, 'formulario.html', {'titulo': 'Agregar prenda'})
+
+
+@requiere_rol('admin')
+def editar_prenda(request, prenda_id):
+    prenda = get_object_or_404(Prenda, pk=prenda_id, eliminado=False)
+    if request.method == 'POST':
+        datos = _datos_validos(request)
+        if datos is None:
+            messages.error(request, 'Completa todos los campos y usa formalidades entre 1 y 10.')
+        else:
+            nombre, color, tipo, estado, formalidad, formalidad_ocasion = datos
+            prenda.nombre = nombre
+            prenda.color = color
+            prenda.tipo = tipo
+            prenda.estado = estado
+            prenda.formalidad = formalidad
+            prenda.resultado_decision = evaluar_prenda(estado, formalidad, formalidad_ocasion)
+            prenda.save()
+            messages.success(request, 'Prenda actualizada correctamente.')
+            return redirect('lista_prendas')
+    return render(request, 'formulario.html', {
+        'titulo': 'Editar prenda', 'prenda': prenda,
+    })
+
+
+@requiere_rol('admin')
+@require_POST
+def eliminar_prenda(request, prenda_id):
+    prenda = get_object_or_404(Prenda, pk=prenda_id, eliminado=False)
+    prenda.soft_delete()
+    messages.success(request, 'Prenda eliminada correctamente.')
+    return redirect('lista_prendas')

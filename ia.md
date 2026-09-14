@@ -1,6 +1,6 @@
-# Documentación de uso de IA (Criterio 1.1.4)
+# Documentación de uso de IA (EVA2)
 
-1. **Herramienta utilizada:** Codex / GitHub Copilot (integrado en VS Code) y Gemini.
-2. **Para qué la consulté:** Para estructurar la lógica de decisión en Python cumpliendo con la regla de los 4 resultados, y para integrar la lectura del archivo JSON dentro de la vista de Django sin usar bases de datos.
-3. **Consulta concreta:** "Genera la estructura if/elif para evaluar 5 variables (nombre, color, estado, formalidad prenda, formalidad ocasión) que retorne 4 casos exactos: dato inválido, rechazado por suciedad, rechazado por nivel de formalidad y aceptado."
-4. **Correcciones manuales:** La IA inicialmente intentó crear un archivo `models.py` para guardar el "objeto" prenda. Tuve que corregir esto manualmente e indicarle por prompt que construyera un diccionario de Python y lo inyectara directamente en `datos.json` mediante la librería `json`, respetando la restricción de no usar bases de datos de la Fase 0.
+- **Herramienta utilizada:** Codex de OpenAI.
+- **Pregunta textual:** “¿Cómo creo en Django un modelo `Prenda` para un clóset virtual con SQLite, migraciones, borrado lógico y CRUD protegido por los grupos existentes `admin`, `normal` y `viewer`, sin reescribir el motor de decisión de `solucion.py`?”
+- **Aplicación de la respuesta:** Se usó como guía para el modelo, el registro de administración, las migraciones, vistas con `login_required`, decoradores de roles y la importación de datos históricos.
+- **Correcciones realizadas:** El repositorio ES1 no contiene una función llamada `decidir`; contiene `evaluar_prenda(estado, formalidad_prenda, formalidad_ocasion)`. No se modificó ni copió esa función: las vistas la importan y la llaman directamente. También se conservó la estructura de usuarios y grupos ya existente, por lo que se eliminó el script que intentaba crear usuarios.
