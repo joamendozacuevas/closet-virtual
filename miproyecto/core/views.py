@@ -9,6 +9,7 @@ from django.views.decorators.http import require_POST
 
 from solucion import evaluar_prenda
 
+from .forms import PrendaForm
 from .models import Prenda
 
 
@@ -31,28 +32,6 @@ def requiere_rol(*roles):
             return vista(request, *args, **kwargs)
         return envoltura
     return decorador
-
-
-def _datos_validos(request):
-    nombre = request.POST.get('nombre', '').strip()
-    color = request.POST.get('color', '').strip()
-    tipo = request.POST.get('tipo', '').strip()
-    estado = request.POST.get('estado', '').strip()
-    try:
-        formalidad = int(request.POST.get('formalidad', ''))
-        formalidad_ocasion = int(request.POST.get('formalidad_ocasion', ''))
-    except (TypeError, ValueError):
-        return None
-    if (
-        not nombre
-        or not color
-        or tipo not in Prenda.Tipo.values
-        or estado not in Prenda.Estado.values
-        or not 1 <= formalidad <= 10
-        or not 1 <= formalidad_ocasion <= 10
-    ):
-        return None
-    return nombre, color, tipo, estado, formalidad, formalidad_ocasion
 
 
 def vista_login(request):
@@ -89,51 +68,45 @@ def lista_prendas(request):
 @requiere_rol('admin', 'normal')
 def agregar_prenda(request):
     if request.method == 'POST':
-        datos = _datos_validos(request)
-        if datos is None:
-            messages.error(request, 'Completa todos los campos y usa formalidades entre 1 y 10.')
-        else:
-            nombre, color, tipo, estado, formalidad, formalidad_ocasion = datos
-            Prenda.objects.create(
-                nombre=nombre,
-                color=color,
-                tipo=tipo,
-                estado=estado,
-                formalidad=formalidad,
-                resultado_decision=evaluar_prenda(estado, formalidad, formalidad_ocasion),
+        form = PrendaForm(request.POST)
+        if form.is_valid():
+            prenda = form.save(commit=False)
+            prenda.resultado_decision = evaluar_prenda(
+                prenda.estado, prenda.formalidad, prenda.formalidad_ocasion
             )
+            prenda.save()
             messages.success(request, 'Prenda agregada correctamente.')
             return redirect('lista_prendas')
-    return render(request, 'formulario.html', {'titulo': 'Agregar prenda'})
+    else:
+        form = PrendaForm()
+    return render(request, 'formulario.html', {'titulo': 'Agregar prenda', 'form': form})
 
 
 @requiere_rol('admin')
 def editar_prenda(request, prenda_id):
     prenda = get_object_or_404(Prenda, pk=prenda_id, eliminado=False)
     if request.method == 'POST':
-        datos = _datos_validos(request)
-        if datos is None:
-            messages.error(request, 'Completa todos los campos y usa formalidades entre 1 y 10.')
-        else:
-            nombre, color, tipo, estado, formalidad, formalidad_ocasion = datos
-            prenda.nombre = nombre
-            prenda.color = color
-            prenda.tipo = tipo
-            prenda.estado = estado
-            prenda.formalidad = formalidad
-            prenda.resultado_decision = evaluar_prenda(estado, formalidad, formalidad_ocasion)
+        form = PrendaForm(request.POST, instance=prenda)
+        if form.is_valid():
+            prenda = form.save(commit=False)
+            prenda.resultado_decision = evaluar_prenda(
+                prenda.estado, prenda.formalidad, prenda.formalidad_ocasion
+            )
             prenda.save()
             messages.success(request, 'Prenda actualizada correctamente.')
             return redirect('lista_prendas')
+    else:
+        form = PrendaForm(instance=prenda)
     return render(request, 'formulario.html', {
-        'titulo': 'Editar prenda', 'prenda': prenda,
+        'titulo': 'Editar prenda', 'form': form,
     })
 
 
 @requiere_rol('admin')
-@require_POST
 def eliminar_prenda(request, prenda_id):
     prenda = get_object_or_404(Prenda, pk=prenda_id, eliminado=False)
-    prenda.soft_delete()
-    messages.success(request, 'Prenda eliminada correctamente.')
-    return redirect('lista_prendas')
+    if request.method == 'POST':
+        prenda.soft_delete()
+        messages.success(request, 'Prenda eliminada correctamente.')
+        return redirect('lista_prendas')
+    return render(request, 'confirmar_eliminar.html', {'prenda': prenda})

@@ -15,7 +15,7 @@ class PrendaTests(TestCase):
     def test_soft_delete_conserva_el_registro(self):
         prenda = Prenda.objects.create(
             nombre='Prueba', color='Azul', tipo='camisa', estado='limpio',
-            formalidad=2, resultado_decision='Aceptado'
+            formalidad=2, formalidad_ocasion=2, resultado_decision='Aceptado'
         )
         prenda.soft_delete()
         prenda.refresh_from_db()
@@ -23,8 +23,8 @@ class PrendaTests(TestCase):
         self.assertIsNotNone(prenda.fecha_eliminacion)
 
     def test_lista_no_muestra_eliminados(self):
-        Prenda.objects.create(nombre='Activo', color='Negro', tipo='polera', estado='limpio', formalidad=1, resultado_decision='OK')
-        eliminado = Prenda.objects.create(nombre='Oculto', color='Rojo', tipo='polera', estado='sucio', formalidad=1, resultado_decision='OK')
+        Prenda.objects.create(nombre='Activo', color='Negro', tipo='polera', estado='limpio', formalidad=1, formalidad_ocasion=1, resultado_decision='OK')
+        eliminado = Prenda.objects.create(nombre='Oculto', color='Rojo', tipo='polera', estado='sucio', formalidad=1, formalidad_ocasion=1, resultado_decision='OK')
         eliminado.soft_delete()
         self.client.force_login(self.normal)
         respuesta = self.client.get(reverse('lista_prendas'))
@@ -32,7 +32,7 @@ class PrendaTests(TestCase):
         self.assertNotContains(respuesta, 'Oculto')
 
     def test_normal_no_puede_editar(self):
-        prenda = Prenda.objects.create(nombre='Prueba', color='Azul', tipo='camisa', estado='limpio', formalidad=1, resultado_decision='OK')
+        prenda = Prenda.objects.create(nombre='Prueba', color='Azul', tipo='camisa', estado='limpio', formalidad=1, formalidad_ocasion=1, resultado_decision='OK')
         self.client.force_login(self.normal)
         respuesta = self.client.get(reverse('editar_prenda', args=[prenda.pk]))
         self.assertEqual(respuesta.status_code, 403)

@@ -18,7 +18,7 @@
         <table class="table align-middle mb-0"><thead><tr><th>Nombre</th><th>Tipo</th><th>Color</th><th>Estado</th><th>Formalidad</th><th>Decisión</th><th>Acciones</th></tr></thead>
         <tbody>{% for prenda in prendas %}<tr>
             <td>{{ prenda.nombre }}</td><td>{{ prenda.get_tipo_display }}</td><td>{{ prenda.color }}</td><td>{{ prenda.get_estado_display }}</td><td>{{ prenda.formalidad }}</td><td>{{ prenda.resultado_decision }}</td>
-            <td>{% if puede_administrar %}<a class="btn btn-warning btn-sm" href="{% url 'editar_prenda' prenda.pk %}">Editar</a><form class="d-inline" method="post" action="{% url 'eliminar_prenda' prenda.pk %}">{% csrf_token %}<button class="btn btn-danger btn-sm">Eliminar</button></form>{% endif %}</td>
+            <td>{% if puede_administrar %}<a class="btn btn-warning btn-sm" href="{% url 'editar_prenda' prenda.pk %}">Editar</a><a class="btn btn-danger btn-sm" href="{% url 'eliminar_prenda' prenda.pk %}">Eliminar</a>{% endif %}</td>
         </tr>{% empty %}<tr><td colspan="7" class="text-center">No hay prendas activas.</td></tr>{% endfor %}</tbody></table>
     </section></div>
 </main>

@@ -22,6 +22,9 @@ class Prenda(models.Model):
     tipo = models.CharField(max_length=15, choices=Tipo.choices)
     estado = models.CharField(max_length=12, choices=Estado.choices)
     formalidad = models.IntegerField(validators=[MinValueValidator(1), MaxValueValidator(10)])
+    formalidad_ocasion = models.IntegerField(
+        validators=[MinValueValidator(1), MaxValueValidator(10)]
+    )
     resultado_decision = models.CharField(max_length=255)
     fecha_ingreso = models.DateTimeField(default=timezone.now)
     eliminado = models.BooleanField(default=False)
