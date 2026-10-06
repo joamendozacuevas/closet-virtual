@@ -128,14 +128,16 @@ curl -X POST http://127.0.0.1:8000/api/token/ \
   -d '{"username":"TU_USUARIO","password":"TU_CLAVE"}'
 ```
 
-Usa el token devuelto en el encabezado `Authorization: Token TU_TOKEN`.
+La respuesta incluye el token y su vencimiento (una hora). Usa el token en el encabezado `Authorization: Token TU_TOKEN`. Al solicitar otro token para el mismo usuario, el anterior se invalida. El endpoint limita la emisión a 10 solicitudes por hora.
 
 - `GET/POST /api/prendas/`: listar (paginado) y crear prendas.
 - `GET/PUT/PATCH/DELETE /api/prendas/{id}/`: consultar, actualizar o eliminar una prenda. El borrado requiere un usuario staff.
 - `GET /api/docs/`: documentación Swagger.
 - `GET /api/schema/`: esquema OpenAPI.
 
-La API y las vistas HTML de ES2 comparten el modelo `Prenda` y la misma base de datos SQLite. La migración `0002` importa los registros existentes de `datos.json` una sola vez. El JSON original se conserva sin cambios como respaldo de ese momento; los cambios posteriores se guardan en SQLite.
+La API responde en JSON, con paginación de 10 registros y mensajes de validación de DRF. La API y las vistas HTML de ES2 comparten el modelo `Prenda` y la misma base de datos SQLite. La migración `0002` importa los registros existentes de `datos.json` una sola vez. El JSON original se conserva sin cambios como respaldo de ese momento; los cambios posteriores se guardan en SQLite.
+
+En producción, usa HTTPS y un caché compartido para que el límite de solicitudes al endpoint de token se aplique entre todos los procesos del servidor.
 
 ## Seguridad
 

@@ -1,7 +1,12 @@
+from datetime import timedelta
+
 from django.contrib.auth import get_user_model
+from django.conf import settings
 from django.test import TestCase
 from django.urls import reverse
+from django.utils import timezone
 from rest_framework import status
+from rest_framework.authtoken.models import Token
 from rest_framework.test import APIClient
 
 from .models import Prenda
@@ -57,6 +62,7 @@ class PrendaAPITests(TestCase):
         )
 
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertTrue(response['Content-Type'].startswith('application/json'))
         self.assertFalse(Prenda.objects.exists())
 
     def test_resultado_rechaza_diferencia_mayor_a_dos(self):
@@ -121,9 +127,45 @@ class PrendaAPITests(TestCase):
         )
         self.assertEqual(token_response.status_code, status.HTTP_200_OK)
         self.assertIn('token', token_response.data)
+        self.assertIn('expires_at', token_response.data)
+        self.assertEqual(
+            token_response.data['expires_in'], settings.API_TOKEN_LIFETIME_SECONDS
+        )
+        self.assertEqual(token_response['Cache-Control'], 'no-store')
         self.assertEqual(self.client.get('/api/docs/').status_code, status.HTTP_200_OK)
         self.assertEqual(self.client.get('/api/schema/').status_code, status.HTTP_200_OK)
         self.assertEqual(self.client.get('/').status_code, status.HTTP_200_OK)
+
+    def test_solicitar_token_nuevo_rota_el_anterior(self):
+        datos = {'username': self.user.username, 'password': 'clave-segura-123'}
+        primer_token = self.client.post(reverse('api-token'), datos, format='json')
+        segundo_token = self.client.post(reverse('api-token'), datos, format='json')
+
+        self.assertEqual(primer_token.status_code, status.HTTP_200_OK)
+        self.assertEqual(segundo_token.status_code, status.HTTP_200_OK)
+        self.assertNotEqual(primer_token.data['token'], segundo_token.data['token'])
+        self.assertFalse(Token.objects.filter(key=primer_token.data['token']).exists())
+
+    def test_token_vencido_se_rechaza_y_se_elimina(self):
+        token = Token.objects.create(user=self.user)
+        Token.objects.filter(pk=token.pk).update(
+            created=timezone.now() - timedelta(
+                seconds=settings.API_TOKEN_LIFETIME_SECONDS + 1
+            )
+        )
+        self.client.credentials(HTTP_AUTHORIZATION=f'Token {token.key}')
+
+        response = self.client.get(self.list_url)
+
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertTrue(response['Content-Type'].startswith('application/json'))
+        self.assertFalse(Token.objects.filter(pk=token.pk).exists())
+
+    def test_api_solo_negocia_respuestas_json(self):
+        self.authenticate()
+        response = self.client.get(self.list_url, HTTP_ACCEPT='text/html')
+        self.assertEqual(response.status_code, status.HTTP_406_NOT_ACCEPTABLE)
+        self.assertTrue(response['Content-Type'].startswith('application/json'))
 
     def test_vista_html_crea_actualiza_y_borra_en_la_misma_base(self):
         response = self.client.post(
