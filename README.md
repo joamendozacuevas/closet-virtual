@@ -10,12 +10,15 @@ Prueba de Concepto (POC) desarrollada para la evaluación ES1 de Programación B
 - Persistencia local en el archivo `datos.json`.
 - Interfaz web desarrollada con Django y Bootstrap 5.
 - Lectura y CRUD de prendas mediante las vistas de `core/views.py`.
-- No utiliza bases de datos, SQLite ni migraciones.
+- API REST para prendas con Django REST Framework, autenticación por token y Swagger.
+- SQLite y migraciones compartidas por las páginas HTML de ES2 y la API. La migración inicial importa los registros existentes de `datos.json`.
 
 ## Stack Tecnológico
 
 - Python 3
 - Django
+- Django REST Framework
+- drf-spectacular
 - Bootstrap 5
 - JSON
 - python-decouple
@@ -69,18 +72,18 @@ Prueba de Concepto (POC) desarrollada para la evaluación ES1 de Programación B
    cd miproyecto
    ```
 
-6. Crea el archivo local `.env` a partir de la plantilla pública:
+6. Crea el archivo local `.env` a partir de la plantilla pública (desde `miproyecto`):
 
    En macOS o Linux:
 
    ```bash
-   cp .env.example .env
+   cp ../.env.example ../.env
    ```
 
    En Windows PowerShell:
 
    ```powershell
-   Copy-Item .env.example .env
+   Copy-Item ..\.env.example ..\.env
    ```
 
 7. Reemplaza `SECRET_KEY=tu-clave-aqui` en `.env` por una clave local propia. Mantén `.env` fuera del repositorio; el archivo está protegido por `.gitignore`.
@@ -107,10 +110,36 @@ python3 manage.py runserver
 
 Luego abre [http://127.0.0.1:8000/](http://127.0.0.1:8000/) en el navegador.
 
-La interfaz permite agregar, consultar, editar y eliminar prendas almacenadas en `datos.json`.
+La interfaz permite agregar, consultar, editar y eliminar prendas almacenadas en SQLite.
+
+Antes de iniciar Django por primera vez, desde `closet-virtual/miproyecto` aplica las migraciones:
+
+```bash
+python3 manage.py migrate
+```
+
+### API REST
+
+La API requiere autenticación por token. Crea un usuario para desarrollo con `python3 manage.py createsuperuser` y solicita un token:
+
+```bash
+curl -X POST http://127.0.0.1:8000/api/token/ \
+  -H 'Content-Type: application/json' \
+  -d '{"username":"TU_USUARIO","password":"TU_CLAVE"}'
+```
+
+Usa el token devuelto en el encabezado `Authorization: Token TU_TOKEN`.
+
+- `GET/POST /api/prendas/`: listar (paginado) y crear prendas.
+- `GET/PUT/PATCH/DELETE /api/prendas/{id}/`: consultar, actualizar o eliminar una prenda. El borrado requiere un usuario staff.
+- `GET /api/docs/`: documentación Swagger.
+- `GET /api/schema/`: esquema OpenAPI.
+
+La API y las vistas HTML de ES2 comparten el modelo `Prenda` y la misma base de datos SQLite. La migración `0002` importa los registros existentes de `datos.json` una sola vez. El JSON original se conserva sin cambios como respaldo de ese momento; los cambios posteriores se guardan en SQLite.
 
 ## Seguridad
 
 - No subir `.env` a GitHub.
 - Usar `.env.example` como plantilla sin credenciales reales.
-- No se almacenan datos en una base de datos; toda la persistencia se realiza en `datos.json`.
+- Mantener `.env` fuera de GitHub y usar HTTPS en despliegues para proteger las credenciales y los tokens.
+- La migración desde `datos.json` se ejecuta una sola vez. Los cambios posteriores se guardan en SQLite, así que no vuelvas a importar el JSON inicial como si fuera una copia actualizada.

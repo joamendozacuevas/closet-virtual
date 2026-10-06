@@ -2,6 +2,8 @@ import uuid
 
 from django.db import models
 
+from solucion import evaluar_prenda
+
 
 class Prenda(models.Model):
     ESTADOS_LIMPIEZA = [
@@ -20,6 +22,14 @@ class Prenda(models.Model):
 
     class Meta:
         ordering = ['-fecha_creacion']
+
+    def save(self, *args, **kwargs):
+        self.resultado = evaluar_prenda(
+            self.estado_limpieza,
+            self.formalidad_prenda,
+            self.formalidad_ocasion,
+        )
+        super().save(*args, **kwargs)
 
     def __str__(self):
         return self.nombre

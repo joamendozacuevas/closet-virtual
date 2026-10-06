@@ -1,22 +1,10 @@
-import json
-import os
-import uuid
+from uuid import UUID
 
 from django.http import Http404
 from django.shortcuts import redirect, render
+
 from solucion import evaluar_prenda
-
-
-def _leer_datos():
-	if os.path.exists('datos.json'):
-		with open('datos.json', 'r', encoding='utf-8') as archivo:
-			return json.load(archivo)
-	return []
-
-
-def _guardar_datos(registros):
-	with open('datos.json', 'w', encoding='utf-8') as archivo:
-		json.dump(registros, archivo, ensure_ascii=False, indent=4)
+from .models import Prenda
 
 
 def _datos_del_formulario(request):
@@ -43,37 +31,37 @@ def _datos_del_formulario(request):
 
 
 def resumen(request):
-	return render(request, 'resumen.html', {'registros': _leer_datos()})
+	return render(request, 'resumen.html', {'registros': Prenda.objects.all()})
 
 
 def agregar(request):
 	if request.method == 'POST':
 		prenda = _datos_del_formulario(request)
-		prenda['id'] = str(uuid.uuid4())
-		registros = _leer_datos()
-		registros.append(prenda)
-		_guardar_datos(registros)
+		Prenda.objects.create(**prenda)
 	return redirect('resumen')
 
 
 def eliminar(request, id):
-	registros = _leer_datos()
-	registros = [registro for registro in registros if registro.get('id') != id]
-	_guardar_datos(registros)
+	try:
+		identificador = UUID(str(id))
+	except (TypeError, ValueError):
+		identificador = None
+	if identificador is not None:
+		Prenda.objects.filter(pk=identificador).delete()
 	return redirect('resumen')
 
 
 def editar(request, id):
-	registros = _leer_datos()
-	prenda = next(
-		(registro for registro in registros if registro.get('id') == id), None
-	)
-	if prenda is None:
+	try:
+		identificador = UUID(str(id))
+		prenda = Prenda.objects.get(pk=identificador)
+	except (Prenda.DoesNotExist, TypeError, ValueError):
 		raise Http404('La prenda no existe')
 
 	if request.method == 'POST':
-		prenda.update(_datos_del_formulario(request))
-		_guardar_datos(registros)
+		for campo, valor in _datos_del_formulario(request).items():
+			setattr(prenda, campo, valor)
+		prenda.save()
 		return redirect('resumen')
 
 	return render(request, 'editar.html', {'prenda': prenda})
