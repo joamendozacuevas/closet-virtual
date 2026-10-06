@@ -3,3 +3,5 @@ Django==6.1
 python-decouple==3.8
 sqlparse==0.6.0
 tabulate==0.10.0
+djangorestframework>=3.16,<4.0
+drf-spectacular>=0.28,<1.0
